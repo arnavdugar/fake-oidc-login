@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: fake_oidc_test
+          POSTGRES_PASSWORD: development-test-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - run: npm install --global pnpm@11.15.1
+      - uses: actions/setup-go@v6
+        with:
+          cache-dependency-path: api/go.sum
+          go-version-file: api/go.mod
+      - run: pnpm --dir web install --frozen-lockfile
+      - run: pnpm --dir web format:check
+      - run:
+          pnpm --dir web exec prettier --check --config .prettierrc.json --prose-wrap always
+          ../AGENTS.md ../README.md ../schema/openapi.yaml ../.github/workflows/ci.yml
+      - run: ./scripts/build.sh
+      - run: go test -race ./...
+        working-directory: api
+      - run: go vet ./...
+        working-directory: api
+      - run: ./scripts/test-db.sh -race
+        env:
+          TEST_DATABASE_URL: postgres://postgres:development-test-only@localhost:5432/fake_oidc_test?sslmode=disable
+
+  container:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - name: Image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v4
+        with:
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+      - name: Build container
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:latest

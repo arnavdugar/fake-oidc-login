@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: Fake OIDC Login
+  version: 1.0.0
+tags:
+  - name: login
+    description: Development account chooser.
+paths:
+  /api/v1/login:
+    get:
+      operationId: getLogin
+      summary: List accounts and the current authorization request
+      tags: [login]
+      parameters:
+        - in: cookie
+          name: fake_oidc_browser
+          schema:
+            type: string
+            maxLength: 128
+        - in: query
+          name: request
+          schema:
+            type: string
+            maxLength: 128
+      responses:
+        '200':
+          description: Accounts and authorization context.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+        '400':
+          description: Authorization request is expired or belongs to another browser.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: The configured user source is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Error:
+      type: object
+      additionalProperties: false
+      required: [code]
+      properties:
+        code:
+          $ref: '#/components/schemas/ErrorCode'
+    ErrorCode:
+      type: string
+      enum: [accounts_unavailable, invalid_request]
+    Login:
+      type: object
+      additionalProperties: false
+      required: [can_login, client_name, redirect_host, users]
+      properties:
+        can_login:
+          type: boolean
+        client_name:
+          type: string
+        redirect_host:
+          type: string
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    User:
+      type: object
+      additionalProperties: false
+      required: [email, name, subject]
+      properties:
+        email:
+          type: string
+        identifier:
+          description: Optional account identifier displayed instead of email.
+          type: string
+        name:
+          type: string
+        subject:
+          type: string

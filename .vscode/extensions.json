@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "EditorConfig.EditorConfig",
+    "esbenp.prettier-vscode",
+    "GitHub.vscode-github-actions",
+    "golang.go",
+    "ms-azuretools.vscode-containers",
+    "redhat.vscode-yaml"
+  ]
+}

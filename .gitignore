@@ -1,0 +1,7 @@
+.DS_Store
+.env
+.env.*
+.pnpm-store/
+api/ui/dist/
+bin/
+web/node_modules/

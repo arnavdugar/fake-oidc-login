@@ -1,0 +1,6 @@
+.env*
+.git
+.jj
+api/ui/dist
+bin
+web/node_modules

@@ -1,0 +1,26 @@
+{
+  "name": "fake-oidc-login",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@11.15.1",
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "generate:api": "openapi-ts"
+  },
+  "dependencies": {
+    "@tanstack/preact-query": "^5.104.0",
+    "@vanilla-extract/css": "^1.21.2",
+    "preact": "^10.27.2"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "@preact/preset-vite": "^2.10.2",
+    "@vanilla-extract/vite-plugin": "^5.2.6",
+    "prettier": "^3.9.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.3"
+  }
+}
